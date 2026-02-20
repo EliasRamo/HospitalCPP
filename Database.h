@@ -19,4 +19,5 @@ public:
     bool atenderPaciente();
     bool listarPendientes();
     bool listarAtendidos();
+	std::string obtenerPacientesJSON();
 };

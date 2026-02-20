@@ -1,8 +1,45 @@
 ﻿#include "Database.h"
 #include <iostream>
+#include <sstream>
 
 using namespace std;
 using namespace sql;
+
+string Database::obtenerPacientesJSON() {
+    try {
+        std::stringstream json;
+        json << "[";
+
+        Statement* stmt = con->createStatement();
+        ResultSet* res = stmt->executeQuery(
+            "SELECT nombre, edad, atendido FROM usuarios"
+        );
+
+        bool primero = true;
+
+        while (res->next()) {
+            if (!primero) json << ",";
+            primero = false;
+
+            json << "{";
+            json << "\"nombre\":\"" << res->getString("nombre") << "\",";
+            json << "\"edad\":" << res->getInt("edad") << ",";
+            json << "\"atendido\":" << res->getInt("atendido");
+            json << "}";
+        }
+
+        json << "]";
+
+        delete res;
+        delete stmt;
+
+        return json.str();
+    }
+    catch (sql::SQLException& e) {
+        return "{\"error\":\"No se pudo obtener pacientes\"}";
+    }
+}
+
 
 Database::Database() {
     driver = sql::mysql::get_mysql_driver_instance();

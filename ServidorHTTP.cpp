@@ -1,41 +1,57 @@
 #include "Database.h"
 #include "httplib.h"
 #include <iostream>
+#include <sstream>
 
 using namespace std;
 
 void iniciarServidor() {
 
-    Database db;
+    
+        Database db;
     httplib::Server svr;
 
-    // Endpoint GET /pacientes
+    // ENDPOINT JSON
     svr.Get("/pacientes", [&](const httplib::Request&, httplib::Response& res) {
 
         try {
             auto con = db.getConnection();
+
             unique_ptr<sql::Statement> stmt(con->createStatement());
             unique_ptr<sql::ResultSet> result(
-                stmt->executeQuery("SELECT nombre, edad FROM usuarios")
+                stmt->executeQuery("SELECT nombre, edad, atendido FROM usuarios")
             );
 
-            string salida;
+            stringstream json;
+            json << "[";
+
+            bool primero = true;
 
             while (result->next()) {
-                salida += result->getString("nombre");
-                salida += " - ";
-                salida += to_string(result->getInt("edad"));
-                salida += "\n";
+
+                if (!primero) json << ",";
+                primero = false;
+
+                json << "{";
+                json << "\"nombre\":\"" << result->getString("nombre") << "\",";
+                json << "\"edad\":" << result->getInt("edad") << ",";
+                json << "\"atendido\":"
+                    << (result->getBoolean("atendido") ? "true" : "false");
+                json << "}";
             }
 
-            res.set_content(salida, "text/plain");
+            json << "]";
+
+            res.set_content(json.str(), "application/json");
         }
         catch (...) {
-            res.set_content("Error consultando base de datos", "text/plain");
+            res.set_content("{\"error\":\"Error consultando base de datos\"}", "application/json");
         }
         });
 
     cout << "Servidor HTTP activo en http://localhost:8085/pacientes\n";
 
     svr.listen("0.0.0.0", 8085);
+    
+
 }
