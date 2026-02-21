@@ -1,9 +1,80 @@
-﻿#include "Database.h"
+﻿
+#include "Database.h"
 #include <iostream>
 #include <sstream>
+#include <memory>     
 
 using namespace std;
 using namespace sql;
+
+string Database::obtenerPendientesJSON() {
+    try {
+        stringstream json;
+        json << "[";
+
+        Statement* stmt = con->createStatement();
+        ResultSet* res = stmt->executeQuery(
+            "SELECT nombre, edad FROM usuarios WHERE atendido = 0"
+        );
+
+        bool primero = true;
+
+        while (res->next()) {
+            if (!primero) json << ",";
+            primero = false;
+
+            json << "{";
+            json << "\"nombre\":\"" << res->getString("nombre") << "\",";
+            json << "\"edad\":" << res->getInt("edad");
+            json << "}";
+        }
+
+        json << "]";
+
+        delete res;
+        delete stmt;
+
+        return json.str();
+    }
+    catch (...) {
+        return "{\"error\":\"No se pudo obtener pendientes\"}";
+    }
+}
+
+string Database::obtenerAtendidosJSON() {
+    try {
+        stringstream json;
+        json << "[";
+
+        Statement* stmt = con->createStatement();
+        ResultSet* res = stmt->executeQuery(
+            "SELECT nombre, edad FROM usuarios WHERE atendido = 1"
+        );
+
+        bool primero = true;
+
+        while (res->next()) {
+            if (!primero) json << ",";
+            primero = false;
+
+            json << "{";
+            json << "\"nombre\":\"" << res->getString("nombre") << "\",";
+            json << "\"edad\":" << res->getInt("edad");
+            json << "}";
+        }
+
+        json << "]";
+
+        delete res;
+        delete stmt;
+
+        return json.str();
+    }
+    catch (...) {
+        return "{\"error\":\"No se pudo obtener atendidos\"}";
+    }
+}
+
 
 string Database::obtenerPacientesJSON() {
     try {
@@ -146,12 +217,13 @@ bool Database::atenderPaciente() {
         unique_ptr<ResultSet> res(
             stmt->executeQuery(
                 "SELECT id, nombre, edad FROM usuarios "
+                "WHERE atendido = 0 "
                 "ORDER BY edad DESC LIMIT 1"
             )
         );
 
         if (!res->next()) {
-            cout << "No hay pacientes\n";
+            cout << "No hay pacientes pendientes\n";
             return false;
         }
 
@@ -159,8 +231,7 @@ bool Database::atenderPaciente() {
         string nombre = res->getString("nombre");
         int edad = res->getInt("edad");
 
-        stmt->execute("UPDATE usuarios SET atendido = TRUE WHERE id = " + to_string(id));
-
+        stmt->execute("UPDATE usuarios SET atendido = 1 WHERE id = " + to_string(id));
 
         cout << "Paciente atendido: "
             << nombre << " (" << edad << " años)\n";
@@ -172,6 +243,7 @@ bool Database::atenderPaciente() {
         return false;
     }
 }
+
 
 sql::Connection* Database::getConnection() {
     return con;

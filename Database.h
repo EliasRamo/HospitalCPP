@@ -11,13 +11,15 @@ public:
     Database();
     ~Database();
 
-    // ?? ESTE ES CLAVE PARA EL SERVIDOR HTTP
-    sql::Connection* getConnection();
-
     bool insertarPaciente(std::string nombre, int edad);
     bool listarPacientes();
     bool atenderPaciente();
     bool listarPendientes();
     bool listarAtendidos();
-	std::string obtenerPacientesJSON();
+
+    std::string obtenerPacientesJSON();
+    std::string obtenerPendientesJSON();
+    std::string obtenerAtendidosJSON();
+
+    sql::Connection* getConnection();
 };

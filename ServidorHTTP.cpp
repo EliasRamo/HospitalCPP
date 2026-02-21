@@ -1,57 +1,34 @@
 #include "Database.h"
 #include "httplib.h"
 #include <iostream>
-#include <sstream>
 
 using namespace std;
 
 void iniciarServidor() {
 
-    
-        Database db;
+    Database db;
     httplib::Server svr;
 
-    // ENDPOINT JSON
+    // TODOS LOS PACIENTES
     svr.Get("/pacientes", [&](const httplib::Request&, httplib::Response& res) {
-
-        try {
-            auto con = db.getConnection();
-
-            unique_ptr<sql::Statement> stmt(con->createStatement());
-            unique_ptr<sql::ResultSet> result(
-                stmt->executeQuery("SELECT nombre, edad, atendido FROM usuarios")
-            );
-
-            stringstream json;
-            json << "[";
-
-            bool primero = true;
-
-            while (result->next()) {
-
-                if (!primero) json << ",";
-                primero = false;
-
-                json << "{";
-                json << "\"nombre\":\"" << result->getString("nombre") << "\",";
-                json << "\"edad\":" << result->getInt("edad") << ",";
-                json << "\"atendido\":"
-                    << (result->getBoolean("atendido") ? "true" : "false");
-                json << "}";
-            }
-
-            json << "]";
-
-            res.set_content(json.str(), "application/json");
-        }
-        catch (...) {
-            res.set_content("{\"error\":\"Error consultando base de datos\"}", "application/json");
-        }
+        res.set_content(db.obtenerPacientesJSON(), "application/json");
         });
 
-    cout << "Servidor HTTP activo en http://localhost:8085/pacientes\n";
+    // SOLO PENDIENTES
+    svr.Get("/pendientes", [&](const httplib::Request&, httplib::Response& res) {
+        res.set_content(db.obtenerPendientesJSON(), "application/json");
+        });
+
+    // SOLO ATENDIDOS
+    svr.Get("/atendidos", [&](const httplib::Request&, httplib::Response& res) {
+        res.set_content(db.obtenerAtendidosJSON(), "application/json");
+        });
+
+    cout << "Servidor HTTP activo en:\n";
+    cout << "http://localhost:8085/pacientes\n";
+    cout << "http://localhost:8085/pendientes\n";
+    cout << "http://localhost:8085/atendidos\n";
 
     svr.listen("0.0.0.0", 8085);
-    
-
 }
+

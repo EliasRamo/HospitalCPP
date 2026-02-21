@@ -7,7 +7,7 @@ void Hospital::menu() {
     Database db;
     int opcion;
 
-	//hola mundo
+
     do {
         cout << "\n--- HOSPITAL ---\n";
         cout << "1. Ingresar paciente\n";

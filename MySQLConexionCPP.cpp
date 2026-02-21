@@ -1,7 +1,7 @@
 ﻿#include "Hospital.h"
 #include <thread>
 
-void iniciarServidor();  // declaración messi
+void iniciarServidor();  
 
 int main() {
 
