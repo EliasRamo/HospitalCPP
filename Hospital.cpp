@@ -7,7 +7,6 @@ void Hospital::menu() {
     Database db;
     int opcion;
 
-
     do {
         cout << "\n--- HOSPITAL ---\n";
         cout << "1. Ingresar paciente\n";
@@ -15,6 +14,7 @@ void Hospital::menu() {
         cout << "3. Mostrar pacientes\n";
         cout << "4. Mostrar pacientes pendientes\n";
         cout << "5. Mostrar pacientes atendidos\n";
+        cout << "6. Eliminar paciente\n";
         cout << "0. Salir\n";
         cout << "Opcion: ";
         cin >> opcion;
@@ -44,15 +44,27 @@ void Hospital::menu() {
             if (!db.listarPacientes())
                 cout << "Error al listar pacientes\n";
         }
-        
+
         else if (opcion == 4) {
             if (!db.listarPendientes())
                 cout << "Error al listar pacientes pendientes\n";
         }
+
         else if (opcion == 5) {
             if (!db.listarAtendidos())
                 cout << "Error al listar pacientes atendidos\n";
-		}
+        }
+
+        else if (opcion == 6) {
+            int id;
+            cout << "ID del paciente a eliminar: ";
+            cin >> id;
+
+            if (db.eliminarPaciente(id))
+                cout << "Paciente eliminado logicamente\n";
+            else
+                cout << "No se pudo eliminar el paciente\n";
+        }
 
     } while (opcion != 0);
 }

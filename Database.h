@@ -1,3 +1,4 @@
+
 #pragma once
 #include <mysql/jdbc.h>
 #include <string>
@@ -12,14 +13,16 @@ public:
     ~Database();
 
     bool insertarPaciente(std::string nombre, int edad);
-    bool listarPacientes();
     bool atenderPaciente();
-    bool listarPendientes();
-    bool listarAtendidos();
 
     std::string obtenerPacientesJSON();
     std::string obtenerPendientesJSON();
     std::string obtenerAtendidosJSON();
+    bool listarPacientes();
+    bool listarPendientes();
+    bool listarAtendidos();
+    bool eliminarPaciente(int id);
+
 
     sql::Connection* getConnection();
 };

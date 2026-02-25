@@ -1,11 +1,77 @@
-﻿
-#include "Database.h"
+﻿#include "Database.h"
+#include "constantes.h"
 #include <iostream>
 #include <sstream>
-#include <memory>     
+#include <memory>
 
 using namespace std;
 using namespace sql;
+
+Database::Database() {
+    driver = sql::mysql::get_mysql_driver_instance();
+    string conexion = "tcp://" + Constantes::DB_HOST + ":" + to_string(Constantes::DB_PORT);
+    con = driver->connect(conexion, Constantes::DB_USER, Constantes::DB_PASS);
+    con->setSchema(Constantes::DB_SCHEMA);
+}
+
+Database::~Database() {
+    delete con;
+}
+
+bool Database::insertarPaciente(string nombre, int edad) {
+    try {
+        unique_ptr<PreparedStatement> stmt(
+            con->prepareStatement("INSERT INTO usuarios(nombre, edad) VALUES(?, ?)")
+        );
+        stmt->setString(1, nombre);
+        stmt->setInt(2, edad);
+        stmt->execute();
+        return true;
+    }
+    catch (...) { return false; }
+}
+
+bool Database::atenderPaciente() {
+    try {
+        unique_ptr<Statement> stmt(con->createStatement());
+        unique_ptr<ResultSet> res(stmt->executeQuery(Constantes::SQL_SIGUIENTE));
+
+        if (!res->next()) return false;
+
+        int id = res->getInt("id");
+        stmt->execute("UPDATE usuarios SET atendido = 1 WHERE id = " + to_string(id));
+        return true;
+    }
+    catch (...) { return false; }
+}
+
+string Database::obtenerPacientesJSON() {
+    try {
+        stringstream json;
+        json << "[";
+
+        Statement* stmt = con->createStatement();
+        ResultSet* res = stmt->executeQuery(Constantes::SQL_TODOS);
+
+        bool primero = true;
+        while (res->next()) {
+            if (!primero) json << ",";
+            primero = false;
+
+            json << "{";
+            json << "\"nombre\":\"" << res->getString("nombre") << "\",";
+            json << "\"edad\":" << res->getInt("edad") << ",";
+            json << "\"atendido\":" << (res->getInt("atendido") ? "true" : "false");
+            json << "}";
+        }
+
+        json << "]";
+        delete res;
+        delete stmt;
+        return json.str();
+    }
+    catch (...) { return "{\"error\":\"db\"}"; }
+}
 
 string Database::obtenerPendientesJSON() {
     try {
@@ -13,12 +79,9 @@ string Database::obtenerPendientesJSON() {
         json << "[";
 
         Statement* stmt = con->createStatement();
-        ResultSet* res = stmt->executeQuery(
-            "SELECT nombre, edad FROM usuarios WHERE atendido = 0"
-        );
+        ResultSet* res = stmt->executeQuery(Constantes::SQL_PENDIENTES);
 
         bool primero = true;
-
         while (res->next()) {
             if (!primero) json << ",";
             primero = false;
@@ -30,15 +93,11 @@ string Database::obtenerPendientesJSON() {
         }
 
         json << "]";
-
         delete res;
         delete stmt;
-
         return json.str();
     }
-    catch (...) {
-        return "{\"error\":\"No se pudo obtener pendientes\"}";
-    }
+    catch (...) { return "{\"error\":\"db\"}"; }
 }
 
 string Database::obtenerAtendidosJSON() {
@@ -47,12 +106,9 @@ string Database::obtenerAtendidosJSON() {
         json << "[";
 
         Statement* stmt = con->createStatement();
-        ResultSet* res = stmt->executeQuery(
-            "SELECT nombre, edad FROM usuarios WHERE atendido = 1"
-        );
+        ResultSet* res = stmt->executeQuery(Constantes::SQL_ATENDIDOS);
 
         bool primero = true;
-
         while (res->next()) {
             if (!primero) json << ",";
             primero = false;
@@ -64,187 +120,84 @@ string Database::obtenerAtendidosJSON() {
         }
 
         json << "]";
-
         delete res;
         delete stmt;
-
         return json.str();
     }
-    catch (...) {
-        return "{\"error\":\"No se pudo obtener atendidos\"}";
-    }
-}
-
-
-string Database::obtenerPacientesJSON() {
-    try {
-        std::stringstream json;
-        json << "[";
-
-        Statement* stmt = con->createStatement();
-        ResultSet* res = stmt->executeQuery(
-            "SELECT nombre, edad, atendido FROM usuarios"
-        );
-
-        bool primero = true;
-
-        while (res->next()) {
-            if (!primero) json << ",";
-            primero = false;
-
-            json << "{";
-            json << "\"nombre\":\"" << res->getString("nombre") << "\",";
-            json << "\"edad\":" << res->getInt("edad") << ",";
-            json << "\"atendido\":" << res->getInt("atendido");
-            json << "}";
-        }
-
-        json << "]";
-
-        delete res;
-        delete stmt;
-
-        return json.str();
-    }
-    catch (sql::SQLException& e) {
-        return "{\"error\":\"No se pudo obtener pacientes\"}";
-    }
-}
-
-
-Database::Database() {
-    driver = sql::mysql::get_mysql_driver_instance();
-    con = driver->connect("tcp://127.0.0.1:3306", "root", "");
-    con->setSchema("hospital");
-}
-
-Database::~Database() {
-    delete con;
-}
-
-bool Database::listarPendientes() {
-    try {
-        Statement* stmt = con->createStatement();
-        ResultSet* res = stmt->executeQuery(
-            "SELECT nombre, edad FROM usuarios WHERE atendido = 0"
-        );
-
-        cout << "\n--- PACIENTES PENDIENTES ---\n";
-        while (res->next()) {
-            cout << res->getString("nombre")
-                << " - " << res->getInt("edad") << endl;
-        }
-
-        delete res;
-        delete stmt;
-        return true;
-    }
-    catch (sql::SQLException& e) {
-        cout << "Error listar pendientes: " << e.what() << endl;
-        return false;
-    }
-}
-
-bool Database::listarAtendidos() {
-    try {
-        Statement* stmt = con->createStatement();
-        ResultSet* res = stmt->executeQuery(
-            "SELECT nombre, edad FROM usuarios WHERE atendido = 1"
-        );
-
-        cout << "\n--- PACIENTES ATENDIDOS ---\n";
-        while (res->next()) {
-            cout << res->getString("nombre")
-                << " - " << res->getInt("edad") << endl;
-        }
-
-        delete res;
-        delete stmt;
-        return true;
-    }
-    catch (sql::SQLException& e) {
-        cout << "Error listar atendidos: " << e.what() << endl;
-        return false;
-    }
-}
-
-
-bool Database::insertarPaciente(string nombre, int edad) {
-    try {
-        unique_ptr<PreparedStatement> stmt(
-            con->prepareStatement(
-                "INSERT INTO usuarios(nombre, edad) VALUES(?, ?)"
-            )
-        );
-
-        stmt->setString(1, nombre);
-        stmt->setInt(2, edad);
-        stmt->execute();
-
-        return true;
-    }
-    catch (SQLException& e) {
-        cout << "Error insertar: " << e.what() << endl;
-        return false;
-    }
+    catch (...) { return "{\"error\":\"db\"}"; }
 }
 
 bool Database::listarPacientes() {
     try {
+        auto con = getConnection();
         unique_ptr<Statement> stmt(con->createStatement());
-        unique_ptr<ResultSet> res(
-            stmt->executeQuery("SELECT nombre, edad FROM usuarios")
-        );
+        unique_ptr<ResultSet> res(stmt->executeQuery(Constantes::SQL_TODOS));
 
         cout << "\n--- PACIENTES ---\n";
         while (res->next()) {
             cout << res->getString("nombre")
                 << " - " << res->getInt("edad") << endl;
         }
-
         return true;
     }
-    catch (SQLException& e) {
-        cout << "Error listar: " << e.what() << endl;
-        return false;
-    }
+    catch (...) { return false; }
 }
 
-bool Database::atenderPaciente() {
+bool Database::listarPendientes() {
     try {
+        auto con = getConnection();
         unique_ptr<Statement> stmt(con->createStatement());
+        unique_ptr<ResultSet> res(stmt->executeQuery(Constantes::SQL_PENDIENTES));
 
-        unique_ptr<ResultSet> res(
-            stmt->executeQuery(
-                "SELECT id, nombre, edad FROM usuarios "
-                "WHERE atendido = 0 "
-                "ORDER BY edad DESC LIMIT 1"
-            )
-        );
-
-        if (!res->next()) {
-            cout << "No hay pacientes pendientes\n";
-            return false;
+        cout << "\n--- PENDIENTES ---\n";
+        while (res->next()) {
+            cout << res->getString("nombre")
+                << " - " << res->getInt("edad") << endl;
         }
-
-        int id = res->getInt("id");
-        string nombre = res->getString("nombre");
-        int edad = res->getInt("edad");
-
-        stmt->execute("UPDATE usuarios SET atendido = 1 WHERE id = " + to_string(id));
-
-        cout << "Paciente atendido: "
-            << nombre << " (" << edad << " años)\n";
-
         return true;
     }
-    catch (SQLException& e) {
-        cout << "Error atender: " << e.what() << endl;
-        return false;
-    }
+    catch (...) { return false; }
 }
 
+bool Database::listarAtendidos() {
+    try {
+        auto con = getConnection();
+        unique_ptr<Statement> stmt(con->createStatement());
+        unique_ptr<ResultSet> res(stmt->executeQuery(Constantes::SQL_ATENDIDOS));
+
+        cout << "\n--- ATENDIDOS ---\n";
+        while (res->next()) {
+            cout << res->getString("nombre")
+                << " - " << res->getInt("edad") << endl;
+        }
+        return true;
+    }
+    catch (...) { return false; }
+}
 
 sql::Connection* Database::getConnection() {
     return con;
+}
+
+/* ===========================
+   ELIMINACIÓN LÓGICA NUEVA
+   =========================== */
+
+bool Database::eliminarPaciente(int id) {
+    try {
+        std::unique_ptr<sql::PreparedStatement> stmt(
+            con->prepareStatement(
+                "UPDATE usuarios SET eliminado = 1 WHERE id = ? AND eliminado = 0"
+            )
+        );
+
+        stmt->setInt(1, id);
+
+        int filas = stmt->executeUpdate();   // 🔥 ESTA ES LA CLAVE
+
+        return filas > 0;
+    }
+    catch (...) {
+        return false;
+    }
 }
