@@ -19,7 +19,8 @@ namespace Constantes {
   
 
     const std::string SQL_TODOS =
-        "SELECT id, nombre, edad, atendido FROM usuarios WHERE eliminado = 0";
+        "SELECT id, nombre, edad, atendido, fecha_registro, fecha_actualizacion "
+        "FROM usuarios WHERE eliminado = 0";
 
     const std::string SQL_PENDIENTES =
         "SELECT id, nombre, edad FROM usuarios WHERE atendido = 0 AND eliminado = 0";

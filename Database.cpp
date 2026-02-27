@@ -63,6 +63,11 @@ string Database::obtenerPacientesJSON() {
             json << "\"edad\":" << res->getInt("edad") << ",";
             json << "\"atendido\":" << (res->getInt("atendido") ? "true" : "false");
             json << "}";
+            json << "\"fecha_registro\":\""
+                << res->getString("fecha_registro") << "\",";
+
+            json << "\"fecha_actualizacion\":\""
+                << res->getString("fecha_actualizacion") << "\",";
         }
 
         json << "]";
@@ -194,6 +199,25 @@ bool Database::eliminarPaciente(int id) {
         stmt->setInt(1, id);
 
         int filas = stmt->executeUpdate();   // 🔥 ESTA ES LA CLAVE
+
+        return filas > 0;
+    }
+    catch (...) {
+        return false;
+    }
+}
+
+bool Database::eliminarPacienteFisico(int id) {
+    try {
+        std::unique_ptr<sql::PreparedStatement> stmt(
+            con->prepareStatement(
+                "DELETE FROM usuarios WHERE id = ? AND eliminado = 1"
+            )
+        );
+
+        stmt->setInt(1, id);
+
+        int filas = stmt->executeUpdate();
 
         return filas > 0;
     }

@@ -15,6 +15,7 @@ void Hospital::menu() {
         cout << "4. Mostrar pacientes pendientes\n";
         cout << "5. Mostrar pacientes atendidos\n";
         cout << "6. Eliminar paciente\n";
+        cout << "7. Eliminar paciente definitivamente\n";
         cout << "0. Salir\n";
         cout << "Opcion: ";
         cin >> opcion;
@@ -65,6 +66,17 @@ void Hospital::menu() {
             else
                 cout << "No se pudo eliminar el paciente\n";
         }
+
+
+        else if (opcion == 7) {
+            int id;
+            cout << "ID del paciente a eliminar definitivamente: ";
+            cin >> id;
+            if (db.eliminarPacienteFisico(id))
+                cout << "Paciente eliminado definitivamente\n";
+            else
+                cout << "No se pudo eliminar el paciente\n";
+		}
 
     } while (opcion != 0);
 }

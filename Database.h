@@ -22,6 +22,7 @@ public:
     bool listarPendientes();
     bool listarAtendidos();
     bool eliminarPaciente(int id);
+    bool eliminarPacienteFisico(int id);
 
 
     sql::Connection* getConnection();
