@@ -1,8 +1,10 @@
-﻿#include "Database.h"
+﻿
+#include "Database.h"
 #include "constantes.h"
 #include <iostream>
 #include <sstream>
 #include <memory>
+
 
 using namespace std;
 using namespace sql;
@@ -184,21 +186,16 @@ sql::Connection* Database::getConnection() {
     return con;
 }
 
-/* ===========================
-   ELIMINACIÓN LÓGICA NUEVA
-   =========================== */
 
 bool Database::eliminarPaciente(int id) {
     try {
         std::unique_ptr<sql::PreparedStatement> stmt(
-            con->prepareStatement(
-                "UPDATE usuarios SET eliminado = 1 WHERE id = ? AND eliminado = 0"
-            )
+            con->prepareStatement(Constantes::SQL_ELIMINAR_LOGICO)
         );
 
         stmt->setInt(1, id);
 
-        int filas = stmt->executeUpdate();   // 🔥 ESTA ES LA CLAVE
+        int filas = stmt->executeUpdate();
 
         return filas > 0;
     }
@@ -210,9 +207,7 @@ bool Database::eliminarPaciente(int id) {
 bool Database::eliminarPacienteFisico(int id) {
     try {
         std::unique_ptr<sql::PreparedStatement> stmt(
-            con->prepareStatement(
-                "DELETE FROM usuarios WHERE id = ? AND eliminado = 1"
-            )
+            con->prepareStatement(Constantes::SQL_ELIMINAR_FISICO)
         );
 
         stmt->setInt(1, id);

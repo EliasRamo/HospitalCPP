@@ -18,6 +18,8 @@ namespace Constantes {
     // --- SQL (comodines útiles, opcional) ---
   
 
+    // --- SQL (comodines útiles, opcional) ---
+
     const std::string SQL_TODOS =
         "SELECT id, nombre, edad, atendido, fecha_registro, fecha_actualizacion "
         "FROM usuarios WHERE eliminado = 0";
@@ -30,4 +32,10 @@ namespace Constantes {
 
     const std::string SQL_SIGUIENTE =
         "SELECT id FROM usuarios WHERE atendido = 0 AND eliminado = 0 ORDER BY edad DESC LIMIT 1";
+
+    const std::string SQL_ELIMINAR_LOGICO =
+        "UPDATE usuarios SET eliminado = 1 WHERE id = ? AND eliminado = 0";
+
+    const std::string SQL_ELIMINAR_FISICO =
+        "DELETE FROM usuarios WHERE id = ? AND eliminado = 1";
 }

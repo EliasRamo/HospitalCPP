@@ -1,5 +1,7 @@
-﻿#include "Hospital.h"
+﻿
+#include "Hospital.h"
 #include <thread>
+
 
 void iniciarServidor();  
 

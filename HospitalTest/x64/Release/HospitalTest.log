@@ -1,5 +1,7 @@
 ﻿  pch.cpp
+  Database.cpp
+  Hospital.cpp
+  ServidorHTTP.cpp
   test.cpp
-C:\hospital-practica\HospitalCPP\Database.h(3,10): error C1083: No se puede abrir el archivo incluir: 'mysql/jdbc.h': No such file or directory
-  (compilando archivo de origen "/test.cpp")
-  
+  Generando código...
+  HospitalTest.vcxproj -> C:\Users\elias\source\repos\MySQLConexionCPP\x64\Release\HospitalTest.exe
